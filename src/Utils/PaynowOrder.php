@@ -17,17 +17,52 @@ class PaynowOrder
         $return_url, 
         $amount, 
         $reference = '', 
-        $additional_info = '', 
+        $info = '', 
         $status = '', 
         $auth_email = ''
     ) {
-        $this->result_url = $result_url;
-        $this->return_url = $return_url;
-        $this->amount = (float) $amount;
-        $this->reference = $reference;
-        $this->additional_info = $additional_info;
-        $this->status = $status;
+        $this->setResultUrl($result_url);
+        $this->setReturnUrl($return_url);
+        $this->setAmount((float)$amount);
+        $this->setReference($reference);
+        $this->setAdditionalInfo($info);
+        $this->setStatus($status);
+        $this->setAuthUserEmail($auth_email);
+    }
+
+    public function setAuthUserEmail ($email)
+    {
         $this->auth_email = $email;
+    }
+
+    public function setStatus ($status)
+    {
+        $this->status = $status;
+    }
+
+    public function setAdditionalInfo ($info)
+    {
+        $this->additional_info = $info;
+    }
+
+    public function setReference ($reference)
+    {
+        $this->reference = $reference;
+    }
+
+    public function setAmount (float $amount)
+    {
+        $this->amount = $amount;
+    }
+
+    public function setReturnUrl (string $url)
+    {
+        $this->return_url = $url;
+    }
+
+    public function setResultUrl (string $url)
+    {
+        $this->result_url = $url;
     }
 
     public function getResultUrl ()
