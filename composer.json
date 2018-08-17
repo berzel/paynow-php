@@ -1,2 +1,14 @@
 {
+    "name": "berzel/paynow-php",
+    "description": "PHP library for Paynow (Zimbabwes leading online payments platform)",
+    "type": "library",
+    "license": "GNU",
+    "authors": [
+        {
+            "name": "Berzel Best Tumbude",
+            "email": "berzelbtumbude@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
 }
