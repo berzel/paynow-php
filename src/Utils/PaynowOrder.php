@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Utils;
+namespace Berzel\Paynow\Utils;
 
 class PaynowOrder
 {

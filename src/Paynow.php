@@ -1,11 +1,10 @@
 <?php
 
-namespace App;
+namespace Berzel\Paynow;
 
-use Exception;
-use App\Utils\Helpers;
-use App\Utils\PaynowOrder;
-use App\Utils\PaynowConfig;
+use Berzel\Paynow\Utils\Helpers;
+use Berzel\Paynow\Utils\PaynowOrder;
+use Berzel\Paynow\Exceptions\Exception;
 
 class Paynow
 {
@@ -44,11 +43,11 @@ class Paynow
      *
      * @var string
      */
-    private function __construct(PaynowConfig $config)
+    private function __construct($id, $key, $init_url)
     {
-        $this->initiate_transaction_url = $config->get('PAYNOW_INIT_URL');
-        $this->integration_key          = $config->get('APP_KEY');
-        $this->id                       = $config->get('APP_ID');
+        $this->id = ($id ? : config('paynow.app_id'));
+        $this->integration_key = ($key ? : config('paynow.app_key'));
+        $this->initiate_transaction_url = ($init_url ? : config('paynow.init_url'));
     }
 
     /**
@@ -58,10 +57,10 @@ class Paynow
      * 
      * @return $instance New paynow instance
      */
-    public function getInstance (PaynowConfig $config)
+    public static function getInstance ($id = null, $key = null, $init_url = null)
     {
         if (self::$instance == null) {
-            self::$instance = new Paynow($config);
+            self::$instance = new Paynow($id, $key, $init_url);
         }
 
         return self::$instance;
@@ -126,7 +125,6 @@ class Paynow
 
         if (isset($err)) {
             throw new Exception("Failed to initiate transaction. Reason : $err", 1);
-            exit;
         } else {
             return $order_info;
         }
@@ -195,5 +193,10 @@ class Paynow
     public function getInitUrl ()
     {
         return $this->initiate_transaction_url;
+    }
+
+    public function createOrder ($result_url, $return_url, $amount, $reference = '', $info = '', $status = '', $auth_email = '')
+    {
+        return new PaynowOrder($result_url, $return_url, $amount, $reference, $info, $status, $auth_email);
     }
 }
