@@ -2,13 +2,13 @@
 
 return [
 
-    'init_url' => null,
+    'init_url' => env('PAYNOW_INIT_URL'),
 
-    'app_key' => null,
+    'app_key' => env('PAYNOW_APP_KEY'),
     
-    'app_id' => null,
+    'app_id' => env('PAYNOW_APP_ID'),
 
-    'return_url' => route(),
+    'return_url' => env('PAYNOW_RETURN_ROUTE'),
 
-    'result_url' => route()
+    'result_url' => env('PAYNOW_RESULT_ROUTE')
 ];
