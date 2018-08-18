@@ -15,6 +15,24 @@
     ],
 
     "minimum-stability": "dev",
-    
-    "require": {}
+
+    "require": {},
+
+    "extra" : {
+        "laravel" : {
+            "providers" : [
+                "Berzel\\Paynow\\PaynowServiceProvider"
+            ],
+
+            "aliases" : {
+                "Paynow" : "Berzel\\Paynow\\Facades\\Paynow"
+            }
+        }
+    },
+
+    "autoload": {
+        "psr-4": {
+            "Berzel\\Paynow\\" : "src/"
+        }
+    }
 }
