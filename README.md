@@ -45,9 +45,9 @@ This library gives you the following methods to use:
 
 Getting/Creating an instance of the paynow class is really simple, you just use the `getInstance()` method, which accepts 
 
-two parameters. In its most basic form you just specify the id, key and paynow endpoint to initiate the transaction, of your
+three parameters. In its most basic form you just specify the id, key and paynow endpoint to initiate the transaction, of 
 
-paynow integration. You can retrieve your Paynow app id and app key from the Paynow control panel.
+your paynow integration. You can retrieve your Paynow app id and app key from the Paynow control panel.
 
 ```php
 $paynow = Paynow::getInstance($appId, $appKey, $initUrl);
@@ -148,6 +148,11 @@ use Berzel\Paynow\Paynow;
 
 public function checkout($cart)
 {
+    // lets grab the id and key and initUrl from config
+    $id = config('paynow.id');
+    $key = config('paynow.key');
+    $initUrl = config('paynow.init_url');
+
     //begin a database transaction
     $this->db->beginTransaction();
 
@@ -167,11 +172,6 @@ public function checkout($cart)
 
 
     try {
-        // lets grab the id and key from config
-        $id = config('paynow.id');
-        $key = config('paynow.key');
-        $initUrl = config('paynow.init_url');
-
         //create/get a new paynow instance
         $paynow = Paynow::getInstance($id, $key, $initUrl);
 
@@ -225,6 +225,7 @@ public function getFromPaynow(Order $order)
 
 ```php
 
+// this could be where you are showing the user his/her order details
 public function show(Order $order)
 {
     try {
