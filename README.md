@@ -144,9 +144,11 @@ public function checkout($cart)
         'returnurl' => route('order.return', $order->getId()),
         'amount' => $order->getTotal(),
         'reference' => $order->referenceNumber(),
+        'info' => $order->getAdditionalInfo(),
         'status' => $order->getCurrentStatus(),
         'email' => $order->user()->getEmail()
     ];
+
 
     try {
         // lets grab the id and key from config
