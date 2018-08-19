@@ -1,6 +1,6 @@
 ## Paynow-Php
 
-A simple Paynow library implementation using PHP.
+A simple Paynow library implementation using PHP which provides an expressive and fluent interface to the Paynow payments gateway. It handles pretty much all of the boilerplate code you dreading writing. 
 
 ## Installation
 
