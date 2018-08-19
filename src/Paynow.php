@@ -195,8 +195,16 @@ class Paynow
         return $this->initiate_transaction_url;
     }
 
-    public function createOrder ($result_url, $return_url, $amount, $reference = '', $info = '', $status = '', $auth_email = '')
+    public function createOrder (array $fields)
     {
+        $result_url = $fields['resulturl'];
+        $return_url = $fields['returnurl'];
+        $amount = $fields['amount'];
+        $reference = $fields['reference'];
+        $info = $fields['info'];
+        $status = $fields['status'];
+        $auth_email = $fields['email'];
+        
         return new PaynowOrder($result_url, $return_url, $amount, $reference, $info, $status, $auth_email);
     }
 }
