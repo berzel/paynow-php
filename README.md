@@ -1,6 +1,8 @@
 ## Paynow-Php
 
-A simple Paynow library implementation using PHP which provides an expressive and fluent interface to the Paynow payments gateway. It handles pretty much all of the boilerplate code you dreading writing. 
+A simple Paynow library implementation using PHP which provides an expressive and fluent interface to the Paynow payments 
+
+gateway. It handles pretty much all of the boilerplate code you dreading writing. 
 
 ## Installation
 
@@ -12,7 +14,9 @@ Run the Composer require command from the Terminal:
     
 If you're using Laravel 5.5 or later, this is all there is to do. 
 
-Should you still be on version 5.4 of Laravel, the final steps for you are to add the service provider of the package and alias the package. To do this open your `config/app.php` file.
+Should you still be on version 5.4 of Laravel, the final steps for you are to add the service provider of the package and 
+
+alias the package. To do this open your `config/app.php` file.
 
 Add a new line to the `providers` array:
 
@@ -41,12 +45,12 @@ This library gives you the following methods to use:
 
 Getting/Creating an instance of the paynow class is really simple, you just use the `getInstance()` method, which accepts 
 
-two parameters. In its most basic form you just specify the id and key of your paynow integration. You can retrieve your
+two parameters. In its most basic form you just specify the id, key and paynow endpoint to initiate the transaction, of your
 
-Paynow app id and app key from the Paynow control panel.
+paynow integration. You can retrieve your Paynow app id and app key from the Paynow control panel.
 
 ```php
-$paynow = Paynow::getInstance($appId, $appKey);
+$paynow = Paynow::getInstance($appId, $appKey, $initUrl);
 ```
 
 **The `getInstance()` method will return a Berzel\Paynow\Paynow instance.**
@@ -70,17 +74,15 @@ PaynowOrder instance which you can create using the `createOrder()` method (docu
 
 method will throw an Exception if the attempt to initiate a transaction fails. If the request was successful the full Paynow
 
-response array will 
+response array will be returned from the method. The array will contain a 'browserurl' key value which you can use to 
 
-be returned from the method. The array will contain a 'browserurl' key value which you can use to redirect the user to 
+redirect the user to Paynow to complete the payment. The 'pollurl' key value contains the url on paynow that you can use in
 
-paynow 
+future to get status updates about the order (You should save this to you local storage engine for future use). Other keys
 
-to finish the payment. The 'pollurl' key value contains the url on paynow that you can use in future to get status updates about 
+that are contained in the result array are the 'status', 'hash', etc, of which you are encouraged to also save to your local
 
-the order (You should save this to you local storage engine). Other keys that are contained in the result array are the 
-
-'status', 'hash', etc, which you can also save to your local storage for future use.
+storage for future use.
 
 
 ```php
@@ -91,13 +93,20 @@ $order = $paynow->createOrder($fields);
 $result = $paynow->initiateTransaction($order);
 ```
 
-If an error occurs you can catch the exception and use the `getMessage()` method to get information about why the
+If an error occurs you can catch the exception and use the `getMessage()` method to get information about why the 
 
- transaction failed.
+transaction failed to initiate.
+
 
 ### Paynow::createOrder()
 
-To create a paynow order instance use the `createOrder` method, which retains an instance of the PaynowOrder class which is to be passed as an argument to the `initiateTransaction()` method. The method accepts an array as an argument which should contain the details of your order. This array should contain these keys resulturl, returnurl, amount, reference, info, status, and email. All fields are required and if any of the keys is not found the method will throw an exception.
+To create a paynow order instance use the `createOrder()` method, which retains an instance of the PaynowOrder class which 
+
+is to be passed as an argument to the `initiateTransaction()` method. The method accepts an array as an argument which 
+
+should contain the details of your order. This array should contain these keys resulturl, returnurl, amount, reference, info,
+
+status, and email. All fields are required and if any of the keys is not found the method will throw an exception.
 
 ```php
 $fields = [
@@ -115,12 +124,19 @@ $order = $paynow->createOrder($fields);
 
 ### Paynow::returnFromPaynow and Paynow::updateFromPaynow
 
-When you are returning from paynow after the user has completed payment. You can call the `returnFromPaynow()` or `updateFromPaynow()` method. This method throws an exception if anything unexpected when contacting paynow platform. If everything goes well it will return the current/latest status(Paid, Cancelled, Awaiting Delivery, etc) of the order on paynow. Both methods accept an argument which is the poll url returned earlier when trying to initiate a transaction.
+When you are returning from paynow after the user has completed payment. You can call the `returnFromPaynow()` or
+
+`updateFromPaynow()` method. This method throws an exception if anything unexpected happens when requesting the Paynow  
+
+platform for updates. If everything goes well it will return the current/latest status(Paid, Cancelled, Awaiting Delivery,
+
+etc) of the order on paynow. Both methods accept an argument which is the poll url returned earlier when trying to initiate
+
+a transaction.
 
 ```php
-$orderStatus = $paynow->returnFromPaynow();
+$orderStatus = $paynow->returnFromPaynow($order->pollUrl);
 ```
-
 
 ## Example
 
@@ -154,9 +170,10 @@ public function checkout($cart)
         // lets grab the id and key from config
         $id = config('paynow.id');
         $key = config('paynow.key');
+        $initUrl = config('paynow.init_url');
 
         //create/get a new paynow instance
-        $paynow = Paynow::getInstance($id, $key);
+        $paynow = Paynow::getInstance($id, $key, $initUrl);
 
         // initiate a transaction on paynow
         $result = $paynow->initiateTransaction($paynow->createOrder($fields));
@@ -193,7 +210,7 @@ public function checkout($cart)
 public function getFromPaynow(Order $order)
 {
     try {
-        $orderStatus = Paynow::getInstance($id, $key)->returnFromPaynow($order->getPollUrl());
+        $orderStatus = Paynow::getInstance($id, $key, $initUrl)->returnFromPaynow($order->getPollUrl());
         
         // show the user that the order status
 
@@ -211,7 +228,7 @@ public function getFromPaynow(Order $order)
 public function show(Order $order)
 {
     try {
-        $orderStatus = Paynow::getInstance($id, $key)->updateFromPaynow($order->pollUrl);
+        $orderStatus = Paynow::getInstance($id, $key, $initUrl)->updateFromPaynow($order->pollUrl);
 
         // show the user the user the status
     } catch (Exception $e) {

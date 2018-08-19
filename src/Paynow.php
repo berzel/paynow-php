@@ -45,9 +45,9 @@ class Paynow
      */
     private function __construct($id, $key, $init_url)
     {
-        $this->id = ($id ? : config('paynow.app_id'));
-        $this->integration_key = ($key ? : config('paynow.app_key'));
-        $this->initiate_transaction_url = ($init_url ? : config('paynow.init_url'));
+        $this->id = $id;
+        $this->integration_key = $key;
+        $this->initiate_transaction_url = $init_url;
     }
 
     /**
@@ -59,11 +59,7 @@ class Paynow
      */
     public static function getInstance ($id = null, $key = null, $init_url = null)
     {
-        if (self::$instance == null) {
-            self::$instance = new Paynow($id, $key, $init_url);
-        }
-
-        return self::$instance;
+        return self::$instance ? : new Paynow($id, $key, $init_url);
     }
 
     /**
@@ -132,11 +128,13 @@ class Paynow
         return null;
     }
 
+    // called when getting from paynow
     public function returnFromPaynow ($pollUrl)
     {
         return $this->getUpdateFromPaynow();
     }
 
+    // called when getting an update from paynow
     public function getUpdateFromPaynow ($pollUrl)
     {
         $result = $this->getOrderUpdate($pollUrl);
@@ -166,6 +164,7 @@ class Paynow
         return null;
     }
 
+    // curl to paynow
     private function getOrderUpdate ($pollUrl)
     {
         $ch = curl_init();
@@ -180,23 +179,56 @@ class Paynow
         return ($result = curl_exec($ch));
     }
 
+    // get the id of the integration
     public function getPaynowId ()
     {
         return $this->id;
     }
 
+    // get the integration key
     public function getPaynowKey ()
     {
-        return $this->intergration_key;
+        return $this->integration_key;
     }
 
+    // get the init url 
     public function getInitUrl ()
     {
         return $this->initiate_transaction_url;
     }
 
+    // create a new paynow order
     public function createOrder (array $fields)
     {
+        if (!array_key_exists('resulturl', $fields)) {
+            throw new Exception("Key 'resulturl' not found in field values", 1);
+        }
+
+        if (!array_key_exists('returnurl', $fields)) {
+            throw new Exception("Key 'returnurl' not found in field values", 1);
+        }
+
+        if (!array_key_exists('amount', $fields)) {
+            throw new Exception("Key 'amount' not found in field values", 1);
+        }
+
+        if (!array_key_exists('reference', $fields)) {
+            throw new Exception("Key 'reference' not found in field values", 1);
+        }
+
+        if (!array_key_exists('info', $fields)) {
+            throw new Exception("Key 'info' not found in field values", 1);
+        }
+
+        if (!array_key_exists('status', $fields)) {
+            throw new Exception("Key 'status' not found in field values", 1);
+        }
+
+        if (!array_key_exists('email', $fields)) {
+            throw new Exception("Key 'email' not found in field values", 1);
+        }
+
+
         $result_url = $fields['resulturl'];
         $return_url = $fields['returnurl'];
         $amount = $fields['amount'];
