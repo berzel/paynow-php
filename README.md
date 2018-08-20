@@ -45,12 +45,12 @@ This library gives you the following methods to use:
 
 Getting/Creating an instance of the paynow class is really simple, you just use the `getInstance()` method, which accepts 
 
-three parameters. In its most basic form you just specify the id, key and paynow endpoint to initiate the transaction, of 
+two parameters. In its most basic form you just specify the id, key and optionally paynow endpoint to initiate the 
 
-your paynow integration. You can retrieve your Paynow app id and app key from the Paynow control panel.
+transaction, of your paynow integration. You can retrieve your Paynow app id and app key from the Paynow control panel.
 
 ```php
-$paynow = Paynow::getInstance($appId, $appKey, $initUrl);
+$paynow = Paynow::getInstance($appId, $appKey);
 ```
 
 **The `getInstance()` method will return a Berzel\Paynow\Paynow instance.**

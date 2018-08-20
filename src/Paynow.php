@@ -57,7 +57,7 @@ class Paynow
      * 
      * @return $instance New paynow instance
      */
-    public static function getInstance ($id = null, $key = null, $init_url = null)
+    public static function getInstance ($id, $key, $init_url = 'https://www.paynow.co.zw/interface/initiatetransaction')
     {
         return self::$instance ? : new Paynow($id, $key, $init_url);
     }
