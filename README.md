@@ -45,9 +45,9 @@ This library gives you the following methods to use:
 
 Getting/Creating an instance of the paynow class is really simple, you just use the `getInstance()` method, which accepts 
 
-two parameters. In its most basic form you just specify the id, key and optionally paynow endpoint to initiate the 
+two parameters. In its most basic form you just specify the id and key of your paynow integration. You can retrieve your Paynow 
 
-transaction, of your paynow integration. You can retrieve your Paynow app id and app key from the Paynow control panel.
+app id and app key from the Paynow control panel.
 
 ```php
 $paynow = Paynow::getInstance($appId, $appKey);
@@ -58,10 +58,10 @@ $paynow = Paynow::getInstance($appId, $appKey);
 
 ### Paynow::initiateTransaction()
 
-Paynow expects you to supply a couple of values when initiating a transaction. These values are 
+Paynow expects you to supply a certain number of values when initiating a transaction. These values are 
 
-    - return url => the url that the user will be redirected to after completing a transaction on paynow
-    - result url => the url that paynow will post order updates to
+    - returnurl => the url (on your website) that the user will be redirected to after completing a transaction on paynow
+    - resulturl => the url (on your website) that paynow will post order updates to
     - amount => the amount that you wish to charge the user 
     - reference => the order reference number/string
     - info => additional information about the order
@@ -151,7 +151,6 @@ public function checkout($cart)
     // lets grab the id and key and initUrl from config
     $id = config('paynow.id');
     $key = config('paynow.key');
-    $initUrl = config('paynow.init_url');
 
     //begin a database transaction
     $this->db->beginTransaction();
@@ -164,7 +163,7 @@ public function checkout($cart)
         'resulturl' => route('order.result', $order->getId()),
         'returnurl' => route('order.return', $order->getId()),
         'amount' => $order->getTotal(),
-        'reference' => $order->referenceNumber(),
+        'reference' => $order->getReference(),
         'info' => $order->getAdditionalInfo(),
         'status' => $order->getCurrentStatus(),
         'email' => $order->user()->getEmail()
@@ -173,7 +172,7 @@ public function checkout($cart)
 
     try {
         //create/get a new paynow instance
-        $paynow = Paynow::getInstance($id, $key, $initUrl);
+        $paynow = Paynow::getInstance($id, $key);
 
         // initiate a transaction on paynow
         $result = $paynow->initiateTransaction($paynow->createOrder($fields));
@@ -196,8 +195,6 @@ public function checkout($cart)
         $this->db->rollBack();
 
         $err = $e->getMessage();
-        // You might want to display this to the user
-        return redirect()->route('checkout')->with($err);
     }
 }
 
@@ -210,7 +207,7 @@ public function checkout($cart)
 public function getFromPaynow(Order $order)
 {
     try {
-        $orderStatus = Paynow::getInstance($id, $key, $initUrl)->returnFromPaynow($order->getPollUrl());
+        $orderStatus = Paynow::getInstance($id, $key)->returnFromPaynow($order->getPollUrl());
         
         // show the user that the order status
 
@@ -229,7 +226,7 @@ public function getFromPaynow(Order $order)
 public function show(Order $order)
 {
     try {
-        $orderStatus = Paynow::getInstance($id, $key, $initUrl)->updateFromPaynow($order->pollUrl);
+        $orderStatus = Paynow::getInstance($id, $key)->updateFromPaynow($order->pollUrl);
 
         // show the user the user the status
     } catch (Exception $e) {

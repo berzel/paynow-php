@@ -12,22 +12,16 @@ class PaynowOrder
     private $status;
     private $auth_email;
 
-    public function __construct (
-        $result_url, 
-        $return_url, 
-        $amount, 
-        $reference = '', 
-        $info = '', 
-        $status = '', 
-        $auth_email = ''
-    ) {
-        $this->setResultUrl($result_url);
-        $this->setReturnUrl($return_url);
-        $this->setAmount((float)$amount);
-        $this->setReference($reference);
-        $this->setAdditionalInfo($info);
-        $this->setStatus($status);
-        $this->setAuthUserEmail($auth_email);
+    public static $requiredKeys = ['resulturl','returnurl', 'amount', 'reference', 'info', 'status', 'email'];
+
+    public function __construct ($fields) {
+        $this->setResultUrl($fields['resulturl']);
+        $this->setReturnUrl($fields['returnurl']);
+        $this->setAmount((float)$fields['amount']);
+        $this->setReference($fields['reference']);
+        $this->setAdditionalInfo($fields['info']);
+        $this->setStatus($fields['status']);
+        $this->setAuthUserEmail($fields['email']);
     }
 
     public function setAuthUserEmail ($email)

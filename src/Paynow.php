@@ -22,7 +22,7 @@ class Paynow
      *
      * @var string
      */
-    private $initiate_transaction_url;
+    private $initiate_transaction_url = 'https://www.paynow.co.zw/interface/initiatetransaction';
 
     /**
      * The unique paynow app intergration key
@@ -43,11 +43,10 @@ class Paynow
      *
      * @var string
      */
-    private function __construct($id, $key, $init_url)
+    private function __construct($id, $key)
     {
         $this->id = $id;
         $this->integration_key = $key;
-        $this->initiate_transaction_url = $init_url;
     }
 
     /**
@@ -57,9 +56,9 @@ class Paynow
      * 
      * @return $instance New paynow instance
      */
-    public static function getInstance ($id, $key, $init_url = 'https://www.paynow.co.zw/interface/initiatetransaction')
+    public static function getInstance ($id, $key)
     {
-        return self::$instance ? : new Paynow($id, $key, $init_url);
+        return self::$instance ? : new Paynow($id, $key);
     }
 
     /**
@@ -69,6 +68,65 @@ class Paynow
      * @throws Exception $err Throws an exception if the attempt to initiate the transaction was not successful
      */
     public function initiateTransaction (PaynowOrder $order)
+    {
+        // open cURL connection
+    	$result = $this->curlToPaynowInit($this->createMsg($this->makeValues($order)));
+        
+        if ($result) {
+            return $this->parsePaynowResult($result);
+        }
+    }
+
+    private function parsePaynowResult ($result)
+    {
+        $msgArr = $this->parseMsg($result);
+            
+        if ($msgArr['status'] == 'Error') {
+            throw new Exception("Error occured while initiating transaction", 1);
+        } elseif ($msgArr['status'] == 'Ok') {
+            if ($this->validateHash($msgArr)) {
+                return $msgArr;
+            }
+        } else {
+            throw new Exception("Unknown error occured", 1);
+        }
+    }
+
+    private function validateHash ($msgArr)
+    {
+        $validHash = $this->createHash($msgArr);
+        $paynow_hash = $msgArr['hash'];
+
+        if ($validHash != $paynow_hash) {
+            throw new Exception("Hash mismatch", 1);
+        } else {
+            return true;
+        }
+    }
+
+    private function curlToPaynowInit ($fields_string)
+    {
+        $ch = curl_init($this->getInitUrl());
+
+    	// Set cURL options
+    	curl_setopt($ch, CURLOPT_POST, true);
+    	curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
+    	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+    	// execute curl 
+        $result = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($err) {
+            throw new Exception("Error Processing Request : $err", 1);
+        }
+
+        return $result;
+    }
+
+    // this is excatly how paynow requires you to have your keys
+    private function makeValues ($order)
     {
         $values = [
             'resulturl'      => $order->getResultUrl(),
@@ -81,51 +139,7 @@ class Paynow
     		'status'         => $order->getStatus()
         ];
 
-        $fields_string = $this->createMsg($values);
-
-        // open cURL connection
-    	$ch = curl_init($this->getInitUrl());
-
-    	// Set cURL options
-    	curl_setopt($ch, CURLOPT_POST, true);
-    	curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
-    	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-    	// execute curl 
-        $result = curl_exec($ch);
-        
-        if ($result) {
-            $msgArr = $this->parseMsg($result);
-            
-            if ($msgArr['status'] == 'Error') {
-                $err = 'Error Occured While Initiating Transaction';
-            } elseif ($msgArr['status'] == 'Ok') {
-                // then validate hashes
-                $validateHash = $this->createHash($msgArr);
-                $paynow_hash = $msgArr['hash'];
-
-                if ($validateHash != $paynow_hash) {
-                    $err = 'Hash mismatch';
-                } else {
-                    $order_info = $msgArr;
-                }
-            } else {
-                $err = 'Unknown status from paynow';
-            }
-
-        } else {
-            $err = curl_error($ch);
-        }
-
-        curl_close($ch);
-
-        if (isset($err)) {
-            throw new Exception("Failed to initiate transaction. Reason : $err", 1);
-        } else {
-            return $order_info;
-        }
-
-        return null;
+        return $values;
     }
 
     // called when getting from paynow
@@ -141,27 +155,11 @@ class Paynow
 
         if ($result) {
             $msgArr = $this->parseMsg($result);
-            $validateHash = $this->createHash($msgArr);
-
-            if ($validateHash != $msgArr['hash']) {
-                $err = 'Hash mismatch';
-            } else {
-                $status = $msgArr['status'];
+           
+            if ($this->validateHash($msgArr)) {
+                return $msgArr['status'];
             }
-
-        } else {
-            $err = curl_error($ch);
         }
-
-        curl_close($ch);
-
-        if (isset($err)) {
-            throw new Exception("An error occured. Description : $err", 1);
-        } else {
-            return $status;
-        }
-
-        return null;
     }
 
     // curl to paynow
@@ -176,7 +174,15 @@ class Paynow
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
-        return ($result = curl_exec($ch));
+        $result = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($err) {
+            throw new Exception("Error Processing Request: $err", 1);
+        }
+
+        return $result;
     }
 
     // get the id of the integration
@@ -200,43 +206,19 @@ class Paynow
     // create a new paynow order
     public function createOrder (array $fields)
     {
-        if (!array_key_exists('resulturl', $fields)) {
-            throw new Exception("Key 'resulturl' not found in field values", 1);
+        if ($this->arrayHasAllRequiredKeys($fields)) {
+            return new PaynowOrder($fields);
+        }
+    }
+
+    private function arrayHasAllRequiredKeys ($fields)
+    {
+        foreach (PaynowOrder::$requiredKeys as $key) {
+            if (!array_key_exists($key, $fields)) {
+                throw new Exception("Key $key not found in field values", 1);
+            }
         }
 
-        if (!array_key_exists('returnurl', $fields)) {
-            throw new Exception("Key 'returnurl' not found in field values", 1);
-        }
-
-        if (!array_key_exists('amount', $fields)) {
-            throw new Exception("Key 'amount' not found in field values", 1);
-        }
-
-        if (!array_key_exists('reference', $fields)) {
-            throw new Exception("Key 'reference' not found in field values", 1);
-        }
-
-        if (!array_key_exists('info', $fields)) {
-            throw new Exception("Key 'info' not found in field values", 1);
-        }
-
-        if (!array_key_exists('status', $fields)) {
-            throw new Exception("Key 'status' not found in field values", 1);
-        }
-
-        if (!array_key_exists('email', $fields)) {
-            throw new Exception("Key 'email' not found in field values", 1);
-        }
-
-
-        $result_url = $fields['resulturl'];
-        $return_url = $fields['returnurl'];
-        $amount = $fields['amount'];
-        $reference = $fields['reference'];
-        $info = $fields['info'];
-        $status = $fields['status'];
-        $auth_email = $fields['email'];
-        
-        return new PaynowOrder($result_url, $return_url, $amount, $reference, $info, $status, $auth_email);
+        return true;
     }
 }
