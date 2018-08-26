@@ -145,7 +145,7 @@ class Paynow
     // called when getting from paynow
     public function returnFromPaynow ($pollUrl)
     {
-        return $this->getUpdateFromPaynow();
+        return $this->getUpdateFromPaynow($pollUrl);
     }
 
     // called when getting an update from paynow
@@ -157,7 +157,7 @@ class Paynow
             $msgArr = $this->parseMsg($result);
            
             if ($this->validateHash($msgArr)) {
-                return $msgArr['status'];
+                return $msgArr;
             }
         }
     }
